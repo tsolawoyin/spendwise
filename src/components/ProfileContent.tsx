@@ -28,6 +28,8 @@ export default function ProfileContent({
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   const initial = profile.name?.charAt(0)?.toUpperCase() ?? "?";
 
@@ -70,6 +72,41 @@ export default function ProfileContent({
     );
     setIsEditing(false);
     setSaving(false);
+  }
+
+  async function handleResetBudget() {
+    setResetting(true);
+
+    // Delete income & expenses within the budget period, then the budget itself
+    const userId = profile.id;
+    await supabase
+      .from("income")
+      .delete()
+      .eq("user_id", userId)
+      .gte("date", budget.start_date)
+      .lte("date", budget.end_date);
+
+    await supabase
+      .from("expenses")
+      .delete()
+      .eq("user_id", userId)
+      .gte("date", budget.start_date)
+      .lte("date", budget.end_date);
+
+    const { error } = await supabase
+      .from("budgets")
+      .delete()
+      .eq("id", budget.id);
+
+    if (error) {
+      toast.error("Failed to reset budget");
+      setResetting(false);
+      setConfirmReset(false);
+      return;
+    }
+
+    toast.success("Budget cleared! Let's start fresh.");
+    router.push("/onboarding");
   }
 
   async function handleSignOut() {
@@ -174,8 +211,53 @@ export default function ProfileContent({
         )}
       </FadeIn>
 
+      {/* Reset Budget */}
+      <FadeIn delay={0.3} className="flex flex-col gap-2">
+        <h2 className="text-sm font-semibold text-muted-foreground px-1">
+          Danger zone
+        </h2>
+
+        {confirmReset ? (
+          <div className="rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20 p-4 flex flex-col gap-3">
+            <p className="text-sm text-red-600 dark:text-red-400">
+              This will delete your current budget and all income/expenses
+              within it. You&apos;ll be taken to set up a new budget.
+            </p>
+            <div className="flex gap-2">
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={handleResetBudget}
+                disabled={resetting}
+                className="flex-1 h-11 rounded-lg bg-red-500 text-white text-sm font-semibold disabled:opacity-50"
+              >
+                {resetting ? "Resetting..." : "Yes, reset"}
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setConfirmReset(false)}
+                disabled={resetting}
+                className="flex-1 h-11 rounded-lg border text-sm font-semibold disabled:opacity-50"
+              >
+                Cancel
+              </motion.button>
+            </div>
+          </div>
+        ) : (
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => setConfirmReset(true)}
+            className="rounded-xl border border-red-200 dark:border-red-900/50 bg-card p-4 flex items-center justify-between text-left"
+          >
+            <span className="text-sm text-red-500 font-medium">
+              Reset budget
+            </span>
+            <span className="text-xs text-muted-foreground">Start fresh</span>
+          </motion.button>
+        )}
+      </FadeIn>
+
       {/* Sign Out */}
-      <FadeIn delay={0.3}>
+      <FadeIn delay={0.4}>
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleSignOut}
