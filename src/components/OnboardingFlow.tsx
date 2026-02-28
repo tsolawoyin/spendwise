@@ -27,17 +27,15 @@ export default function OnboardingFlow() {
       return;
     }
 
-    setLoading(true);
-
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (!authUser) {
+    if (!user) {
       toast.error("Session expired. Please log in again.");
-      setLoading(false);
       return;
     }
 
+    setLoading(true);
+
     const { error } = await supabase.from("budgets").insert({
-      user_id: authUser.id,
+      user_id: user.id,
       start_date: startDate,
       end_date: endDate,
     });

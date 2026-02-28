@@ -10,7 +10,7 @@ import { useApp } from "@/providers/app-provider";
 import { toast } from "sonner";
 
 export default function LoginPage() {
-  const { supabase } = useApp();
+  const { supabase, setUser } = useApp();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,6 +29,17 @@ export default function LoginPage() {
       toast.error(error.message);
       setLoading(false);
       return;
+    }
+
+    // Fetch profile and set user context
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", data.user.id)
+      .single();
+
+    if (profile) {
+      setUser({ id: data.user.id, profile, user: data.user });
     }
 
     // Check if user has a budget to decide redirect target

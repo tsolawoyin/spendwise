@@ -10,7 +10,7 @@ import { useApp } from "@/providers/app-provider";
 import { toast } from "sonner";
 
 export default function SignupPage() {
-  const { supabase } = useApp();
+  const { supabase, setUser } = useApp();
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -21,7 +21,7 @@ export default function SignupPage() {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -33,6 +33,19 @@ export default function SignupPage() {
       toast.error(error.message);
       setLoading(false);
       return;
+    }
+
+    if (data.user) {
+      // Fetch the profile created by the DB trigger
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", data.user.id)
+        .single();
+
+      if (profile) {
+        setUser({ id: data.user.id, profile, user: data.user });
+      }
     }
 
     router.push("/onboarding");
