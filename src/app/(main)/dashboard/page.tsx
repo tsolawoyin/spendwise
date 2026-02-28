@@ -1,54 +1,18 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
+import { useBudgetData } from "@/hooks/useBudgetData";
 import { computeStreak } from "@/lib/calculations";
 import type { Transaction } from "@/lib/types";
 import DashboardContent from "@/components/DashboardContent";
+import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
 
-export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export default function DashboardPage() {
+  const { data, isLoading } = useBudgetData();
 
-  if (!user) {
-    redirect("/login");
-  }
+  if (isLoading || !data) return <DashboardSkeleton />;
 
-  // Fetch most recent budget
-  const { data: budget } = await supabase
-    .from("budgets")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
+  const { budget, income, expenses } = data;
 
-  if (!budget) {
-    redirect("/onboarding");
-  }
-
-  // Fetch income within budget period
-  const { data: incomeRows } = await supabase
-    .from("income")
-    .select("*")
-    .eq("user_id", user.id)
-    .gte("date", budget.start_date)
-    .lte("date", budget.end_date)
-    .order("date", { ascending: false });
-
-  // Fetch expenses within budget period
-  const { data: expenseRows } = await supabase
-    .from("expenses")
-    .select("*")
-    .eq("user_id", user.id)
-    .gte("date", budget.start_date)
-    .lte("date", budget.end_date)
-    .order("date", { ascending: false });
-
-  const income = incomeRows ?? [];
-  const expenses = expenseRows ?? [];
-
-  // Supabase returns numeric columns as strings
   const totalIncome = income.reduce(
     (sum, row) => sum + Number(row.amount),
     0
@@ -86,7 +50,6 @@ export default async function DashboardPage() {
     )
     .slice(0, 5);
 
-  // Compute streak from expense dates
   const expenseDates = expenses.map((row) => row.date);
   const streak = computeStreak(expenseDates);
 

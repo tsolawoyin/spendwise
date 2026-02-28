@@ -18,6 +18,7 @@ import BalanceCard from "@/components/BalanceCard";
 import StatCard from "@/components/StatCard";
 import QuickActions from "@/components/QuickActions";
 import TransactionItem from "@/components/TransactionItem";
+import Link from "next/link";
 
 interface DashboardContentProps {
   budget: Budget;
@@ -49,6 +50,7 @@ export default function DashboardContent({
   const budgetPercent = calcBudgetPercent(daysLeft, totalBudgetDays);
 
   const firstName = user?.profile?.name?.split(" ")[0] ?? "there";
+  const budgetExpired = new Date(budget.end_date + "T23:59:59") < new Date();
 
   return (
     <div className="space-y-4">
@@ -64,6 +66,33 @@ export default function DashboardContent({
           </div>
         </div>
       </FadeIn>
+
+      {/* Budget Expired Banner */}
+      {budgetExpired && (
+        <FadeIn>
+          <div className="rounded-2xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/20 p-4 flex flex-col gap-3">
+            <div>
+              <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+                Your budget period has ended
+              </p>
+              <p className="text-xs text-amber-600/80 dark:text-amber-400/60 mt-1">
+                Your budget ended on{" "}
+                {new Date(budget.end_date + "T00:00:00").toLocaleDateString(
+                  "en-US",
+                  { month: "short", day: "numeric" }
+                )}
+                . Start a new period to keep tracking your spending.
+              </p>
+            </div>
+            <Link
+              href="/profile"
+              className="flex items-center justify-center h-11 rounded-xl bg-amber-500 text-white text-sm font-semibold"
+            >
+              Start new budget
+            </Link>
+          </div>
+        </FadeIn>
+      )}
 
       {/* Streak */}
       <StreakCard streak={streak} />

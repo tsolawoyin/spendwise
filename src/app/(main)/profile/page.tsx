@@ -1,40 +1,15 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
+import { useApp } from "@/providers/app-provider";
+import { useBudgetData } from "@/hooks/useBudgetData";
 import ProfileContent from "@/components/ProfileContent";
+import ProfileSkeleton from "@/components/skeletons/ProfileSkeleton";
 
-export default async function ProfilePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export default function ProfilePage() {
+  const { user } = useApp();
+  const { data, isLoading } = useBudgetData({ budgetOnly: true });
 
-  if (!user) {
-    redirect("/login");
-  }
+  if (isLoading || !data || !user) return <ProfileSkeleton />;
 
-  // Fetch profile
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile) {
-    redirect("/login");
-  }
-
-  // Fetch most recent budget
-  const { data: budget } = await supabase
-    .from("budgets")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
-
-  if (!budget) {
-    redirect("/onboarding");
-  }
-
-  return <ProfileContent profile={profile} budget={budget} />;
+  return <ProfileContent profile={user.profile} budget={data.budget} />;
 }

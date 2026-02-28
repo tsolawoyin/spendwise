@@ -1,53 +1,17 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
+import { useBudgetData } from "@/hooks/useBudgetData";
 import type { Transaction } from "@/lib/types";
 import HistoryContent from "@/components/HistoryContent";
+import HistorySkeleton from "@/components/skeletons/HistorySkeleton";
 
-export default async function HistoryPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export default function HistoryPage() {
+  const { data, isLoading } = useBudgetData();
 
-  if (!user) {
-    redirect("/login");
-  }
+  if (isLoading || !data) return <HistorySkeleton />;
 
-  // Fetch most recent budget
-  const { data: budget } = await supabase
-    .from("budgets")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
+  const { income, expenses } = data;
 
-  if (!budget) {
-    redirect("/onboarding");
-  }
-
-  // Fetch income within budget period
-  const { data: incomeRows } = await supabase
-    .from("income")
-    .select("*")
-    .eq("user_id", user.id)
-    .gte("date", budget.start_date)
-    .lte("date", budget.end_date)
-    .order("date", { ascending: false });
-
-  // Fetch expenses within budget period
-  const { data: expenseRows } = await supabase
-    .from("expenses")
-    .select("*")
-    .eq("user_id", user.id)
-    .gte("date", budget.start_date)
-    .lte("date", budget.end_date)
-    .order("date", { ascending: false });
-
-  const income = incomeRows ?? [];
-  const expenses = expenseRows ?? [];
-
-  // Build merged transaction list, sorted by date desc
   const transactions: Transaction[] = [
     ...income.map((row) => ({
       id: row.id,

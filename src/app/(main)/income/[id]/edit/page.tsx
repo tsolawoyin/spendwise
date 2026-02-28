@@ -1,22 +1,16 @@
-import { createClient } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
+"use client";
+
+import { useParams } from "next/navigation";
+import { useRecord } from "@/hooks/useRecord";
+import type { Income } from "@/lib/types";
 import IncomeForm from "@/components/IncomeForm";
+import EditFormSkeleton from "@/components/skeletons/EditFormSkeleton";
 
-export default async function EditIncomePage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  const supabase = await createClient();
+export default function EditIncomePage() {
+  const { id } = useParams<{ id: string }>();
+  const { record: income, isLoading } = useRecord<Income>("income", id);
 
-  const { data: income } = await supabase
-    .from("income")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (!income) notFound();
+  if (isLoading || !income) return <EditFormSkeleton />;
 
   return <IncomeForm mode="edit" initialData={income} />;
 }

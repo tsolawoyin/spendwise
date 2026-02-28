@@ -1,8 +1,10 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
+import { useBudgetData } from "@/hooks/useBudgetData";
 import { computeStreak } from "@/lib/calculations";
 import { EXPENSE_CATEGORIES } from "@/lib/categoryConfig";
 import SummaryContent from "@/components/SummaryContent";
+import SummarySkeleton from "@/components/skeletons/SummarySkeleton";
 
 interface CategoryTotal {
   category: string;
@@ -11,47 +13,12 @@ interface CategoryTotal {
   percent: number;
 }
 
-export default async function SummaryPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export default function SummaryPage() {
+  const { data, isLoading } = useBudgetData();
 
-  if (!user) {
-    redirect("/login");
-  }
+  if (isLoading || !data) return <SummarySkeleton />;
 
-  // Fetch most recent budget
-  const { data: budget } = await supabase
-    .from("budgets")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
-
-  if (!budget) {
-    redirect("/onboarding");
-  }
-
-  // Fetch income within budget period
-  const { data: incomeRows } = await supabase
-    .from("income")
-    .select("*")
-    .eq("user_id", user.id)
-    .gte("date", budget.start_date)
-    .lte("date", budget.end_date);
-
-  // Fetch expenses within budget period
-  const { data: expenseRows } = await supabase
-    .from("expenses")
-    .select("*")
-    .eq("user_id", user.id)
-    .gte("date", budget.start_date)
-    .lte("date", budget.end_date);
-
-  const income = incomeRows ?? [];
-  const expenses = expenseRows ?? [];
+  const { income, expenses } = data;
 
   const totalIncome = income.reduce(
     (sum, row) => sum + Number(row.amount),
@@ -62,7 +29,6 @@ export default async function SummaryPage() {
     0
   );
 
-  // Compute streak
   const expenseDates = expenses.map((row) => row.date);
   const streak = computeStreak(expenseDates);
 

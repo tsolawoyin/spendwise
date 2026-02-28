@@ -1,22 +1,16 @@
-import { createClient } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
+"use client";
+
+import { useParams } from "next/navigation";
+import { useRecord } from "@/hooks/useRecord";
+import type { Expense } from "@/lib/types";
 import ExpenseForm from "@/components/ExpenseForm";
+import EditFormSkeleton from "@/components/skeletons/EditFormSkeleton";
 
-export default async function EditExpensePage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  const supabase = await createClient();
+export default function EditExpensePage() {
+  const { id } = useParams<{ id: string }>();
+  const { record: expense, isLoading } = useRecord<Expense>("expenses", id);
 
-  const { data: expense } = await supabase
-    .from("expenses")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (!expense) notFound();
+  if (isLoading || !expense) return <EditFormSkeleton />;
 
   return <ExpenseForm mode="edit" initialData={expense} />;
 }
