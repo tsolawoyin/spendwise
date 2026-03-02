@@ -26,6 +26,7 @@ interface DashboardContentProps {
   totalExpenses: number;
   recentTransactions: Transaction[];
   streak: number;
+  isHistorical?: boolean;
 }
 
 export default function DashboardContent({
@@ -34,6 +35,7 @@ export default function DashboardContent({
   totalExpenses,
   recentTransactions,
   streak,
+  isHistorical,
 }: DashboardContentProps) {
   const { user } = useApp();
   const { xp, level } = useXP();
@@ -52,8 +54,32 @@ export default function DashboardContent({
   const firstName = user?.profile?.name?.split(" ")[0] ?? "there";
   const budgetExpired = new Date(budget.end_date + "T23:59:59") < new Date();
 
+  const formatDate = (dateStr: string) =>
+    new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+
   return (
     <div className="space-y-4">
+      {/* Viewing Past Budget Banner */}
+      {isHistorical && (
+        <FadeIn>
+          <div className="rounded-2xl border border-violet-200 dark:border-violet-900/50 bg-violet-50 dark:bg-violet-950/20 p-3 flex items-center justify-between">
+            <p className="text-sm text-violet-700 dark:text-violet-300">
+              Viewing: {formatDate(budget.start_date)} &ndash; {formatDate(budget.end_date)}
+            </p>
+            <Link
+              href="/dashboard"
+              className="text-sm font-semibold text-violet-600 dark:text-violet-400 hover:underline"
+            >
+              Back to current
+            </Link>
+          </div>
+        </FadeIn>
+      )}
+
       {/* Header */}
       <FadeIn>
         <div className="flex items-center justify-between">
@@ -68,7 +94,7 @@ export default function DashboardContent({
       </FadeIn>
 
       {/* Budget Expired Banner */}
-      {budgetExpired && (
+      {budgetExpired && !isHistorical && (
         <FadeIn>
           <div className="rounded-2xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/20 p-4 flex flex-col gap-3">
             <div>
@@ -85,7 +111,7 @@ export default function DashboardContent({
               </p>
             </div>
             <Link
-              href="/profile"
+              href="/onboarding?new=true"
               className="flex items-center justify-center h-11 rounded-xl bg-amber-500 text-white text-sm font-semibold"
             >
               Start new budget

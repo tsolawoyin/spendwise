@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useBudgetData } from "@/hooks/useBudgetData";
 import { computeStreak } from "@/lib/calculations";
 import { EXPENSE_CATEGORIES } from "@/lib/categoryConfig";
@@ -14,7 +15,9 @@ interface CategoryTotal {
 }
 
 export default function SummaryPage() {
-  const { data, isLoading } = useBudgetData();
+  const searchParams = useSearchParams();
+  const budgetId = searchParams.get("budgetId") ?? undefined;
+  const { data, isLoading } = useBudgetData({ budgetId });
 
   if (isLoading || !data) return <SummarySkeleton />;
 

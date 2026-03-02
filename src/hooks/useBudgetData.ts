@@ -9,10 +9,13 @@ interface BudgetData {
   budget: Budget;
   income: Income[];
   expenses: Expense[];
+  allBudgets?: Budget[];
 }
 
 interface UseBudgetDataOptions {
   budgetOnly?: boolean;
+  budgetId?: string;
+  includeAllBudgets?: boolean;
 }
 
 export function useBudgetData(options?: UseBudgetDataOptions) {
@@ -30,14 +33,28 @@ export function useBudgetData(options?: UseBudgetDataOptions) {
     let cancelled = false;
 
     async function fetchData() {
-      // Fetch most recent budget
-      const { data: budget } = await supabase
-        .from("budgets")
-        .select("*")
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
+      let budget: Budget | null = null;
+
+      if (options?.budgetId) {
+        // Fetch specific budget by ID
+        const { data: specificBudget } = await supabase
+          .from("budgets")
+          .select("*")
+          .eq("id", options.budgetId)
+          .eq("user_id", user!.id)
+          .single();
+        budget = specificBudget;
+      } else {
+        // Fetch most recent budget
+        const { data: latestBudget } = await supabase
+          .from("budgets")
+          .select("*")
+          .eq("user_id", user!.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+        budget = latestBudget;
+      }
 
       if (cancelled) return;
 
@@ -46,8 +63,21 @@ export function useBudgetData(options?: UseBudgetDataOptions) {
         return;
       }
 
+      // Optionally fetch all budgets for profile
+      let allBudgets: Budget[] | undefined;
+      if (options?.includeAllBudgets) {
+        const { data: budgets } = await supabase
+          .from("budgets")
+          .select("*")
+          .eq("user_id", user!.id)
+          .order("created_at", { ascending: false });
+        allBudgets = budgets ?? [];
+      }
+
+      if (cancelled) return;
+
       if (options?.budgetOnly) {
-        setData({ budget, income: [], expenses: [] });
+        setData({ budget, income: [], expenses: [], allBudgets });
         setIsLoading(false);
         return;
       }
@@ -76,6 +106,7 @@ export function useBudgetData(options?: UseBudgetDataOptions) {
         budget,
         income: incomeResult.data ?? [],
         expenses: expenseResult.data ?? [],
+        allBudgets,
       });
       setIsLoading(false);
     }
@@ -85,7 +116,7 @@ export function useBudgetData(options?: UseBudgetDataOptions) {
     return () => {
       cancelled = true;
     };
-  }, [user, supabase, router, options?.budgetOnly]);
+  }, [user, supabase, router, options?.budgetOnly, options?.budgetId, options?.includeAllBudgets]);
 
   return { data, isLoading };
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { useApp } from "@/providers/app-provider";
 import { toast } from "sonner";
@@ -9,6 +9,8 @@ import { toast } from "sonner";
 export default function OnboardingFlow() {
   const { supabase, user } = useApp();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isNewBudget = searchParams.get("new") === "true";
   const [step, setStep] = useState(1);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -68,9 +70,9 @@ export default function OnboardingFlow() {
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl p-4 mb-6"
+                className={`${isNewBudget ? "bg-amber-100 dark:bg-amber-900/30" : "bg-emerald-100 dark:bg-emerald-900/30"} rounded-2xl p-4 mb-6`}
               >
-                <span className="text-5xl block">👋</span>
+                <span className="text-5xl block">{isNewBudget ? "📅" : "👋"}</span>
               </motion.div>
 
               <motion.h1
@@ -79,7 +81,7 @@ export default function OnboardingFlow() {
                 transition={{ delay: 0.1 }}
                 className="text-3xl font-bold mb-2"
               >
-                Hey, {firstName}!
+                {isNewBudget ? "New Budget Period" : `Hey, ${firstName}!`}
               </motion.h1>
 
               <motion.p
@@ -88,8 +90,9 @@ export default function OnboardingFlow() {
                 transition={{ delay: 0.2 }}
                 className="text-muted-foreground mb-8"
               >
-                Let&apos;s set up your first budget period to start tracking
-                your spending.
+                {isNewBudget
+                  ? "Set up your next budget period. Your previous budgets are preserved."
+                  : "Let\u0027s set up your first budget period to start tracking your spending."}
               </motion.p>
 
               <motion.button
@@ -100,7 +103,7 @@ export default function OnboardingFlow() {
                 onClick={() => setStep(2)}
                 className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-colors"
               >
-                Let&apos;s Go →
+                {isNewBudget ? "Set Dates →" : "Let\u0027s Go →"}
               </motion.button>
             </motion.div>
           )}

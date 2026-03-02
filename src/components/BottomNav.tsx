@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
 
 const tabs = [
@@ -13,6 +13,8 @@ const tabs = [
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const budgetId = searchParams.get("budgetId");
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-t border-border pb-[env(safe-area-inset-bottom)]">
@@ -20,11 +22,15 @@ export default function BottomNav() {
         {tabs.map((tab) => {
           const isActive =
             pathname === tab.href || pathname.startsWith(`${tab.href}/`);
+          const href =
+            budgetId && tab.href !== "/profile"
+              ? `${tab.href}?budgetId=${budgetId}`
+              : tab.href;
 
           return (
             <Link
               key={tab.href}
-              href={tab.href}
+              href={href}
               className="flex flex-col items-center justify-center gap-1 w-16 h-full relative"
             >
               <span className="text-xl">{tab.icon}</span>

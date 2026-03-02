@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useBudgetData } from "@/hooks/useBudgetData";
 import { computeStreak } from "@/lib/calculations";
 import type { Transaction } from "@/lib/types";
@@ -7,7 +8,9 @@ import DashboardContent from "@/components/DashboardContent";
 import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
 
 export default function DashboardPage() {
-  const { data, isLoading } = useBudgetData();
+  const searchParams = useSearchParams();
+  const budgetId = searchParams.get("budgetId") ?? undefined;
+  const { data, isLoading } = useBudgetData({ budgetId });
 
   if (isLoading || !data) return <DashboardSkeleton />;
 
@@ -60,6 +63,7 @@ export default function DashboardPage() {
       totalExpenses={totalExpenses}
       recentTransactions={transactions}
       streak={streak}
+      isHistorical={!!budgetId}
     />
   );
 }

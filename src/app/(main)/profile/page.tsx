@@ -7,9 +7,18 @@ import ProfileSkeleton from "@/components/skeletons/ProfileSkeleton";
 
 export default function ProfilePage() {
   const { user } = useApp();
-  const { data, isLoading } = useBudgetData({ budgetOnly: true });
+  const { data, isLoading } = useBudgetData({
+    budgetOnly: true,
+    includeAllBudgets: true,
+  });
 
   if (isLoading || !data || !user) return <ProfileSkeleton />;
 
-  return <ProfileContent profile={user.profile} budget={data.budget} />;
+  return (
+    <ProfileContent
+      profile={user.profile}
+      budget={data.budget}
+      allBudgets={data.allBudgets ?? []}
+    />
+  );
 }

@@ -1,12 +1,15 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useBudgetData } from "@/hooks/useBudgetData";
 import type { Transaction } from "@/lib/types";
 import HistoryContent from "@/components/HistoryContent";
 import HistorySkeleton from "@/components/skeletons/HistorySkeleton";
 
 export default function HistoryPage() {
-  const { data, isLoading } = useBudgetData();
+  const searchParams = useSearchParams();
+  const budgetId = searchParams.get("budgetId") ?? undefined;
+  const { data, isLoading } = useBudgetData({ budgetId });
 
   if (isLoading || !data) return <HistorySkeleton />;
 
