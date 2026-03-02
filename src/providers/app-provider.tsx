@@ -15,6 +15,7 @@ import {
   User as SupabaseUser,
 } from "@supabase/supabase-js";
 import { Toaster } from "@/components/ui/sonner";
+import PushNotification from "./push-notification-context";
 
 export interface Profile {
   id: string;
@@ -48,7 +49,7 @@ export default function AppProvider({
 }) {
   const supabase = createClient();
   const [user, setUser] = useState(supabase_user);
-  
+
   const app = {
     supabase,
     user,
@@ -57,8 +58,10 @@ export default function AppProvider({
 
   return (
     <AppContext.Provider value={app}>
-      {children}
-      <Toaster />
+      <PushNotification>
+        {children}
+        <Toaster />
+      </PushNotification>
     </AppContext.Provider>
   );
 }

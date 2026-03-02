@@ -121,7 +121,7 @@ export default function PushNotification({
           sendClientNotification({
             userId: user.id,
             title: "Notification enabled",
-            body: "Thank you for enabling notification for JustWash",
+            body: "Thank you for enabling notifications for SpendWise",
           });
         }
       }

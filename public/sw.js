@@ -14,7 +14,7 @@ self.addEventListener("fetch", function (event) {
 // Cache the start URL on install so offline navigation works
 self.addEventListener("install", function (event) {
   event.waitUntil(
-    caches.open("justwash-v1").then(function (cache) {
+    caches.open("spendwise-v1").then(function (cache) {
       return cache.addAll(["/"]);
     })
   );
@@ -31,8 +31,8 @@ self.addEventListener("push", function (event) {
 
     const options = {
       body: data.body,
-      icon: data.icon || "/icon.png",
-      badge: data.badge || "/badge.png",
+      icon: data.icon || "/icons/android-chrome-192x192.png",
+      badge: data.badge || "/icons/android-chrome-192x192.png",
       vibrate: [100, 50, 100],
       data: data.data || {}, // Pass the actual notification data including actionUrl
       actions: data.actions || [],

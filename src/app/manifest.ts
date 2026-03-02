@@ -2,12 +2,13 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Spendwise",
-    short_name: "Spendwise",
+    name: "SpendWise",
+    short_name: "SpendWise",
     description: "Helping you spend wisely",
     start_url: "/",
     id: "/",
     display: "standalone",
+    orientation: "portrait",
     background_color: "#000000",
     theme_color: "#000000",
 
