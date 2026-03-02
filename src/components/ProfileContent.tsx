@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { toast } from "sonner";
 import { useApp, type Profile } from "@/providers/app-provider";
+import { usePushNotification } from "@/providers/push-notification-context";
 import { useXP } from "@/hooks/useXP";
 import type { Budget } from "@/lib/types";
 import FadeIn from "@/components/motion/FadeIn";
 import LevelBadge from "@/components/LevelBadge";
 import XPBadge from "@/components/XPBadge";
+import { Switch } from "@/components/ui/switch";
 
 interface ProfileContentProps {
   profile: Profile;
@@ -23,6 +25,8 @@ export default function ProfileContent({
   const router = useRouter();
   const { supabase, setUser } = useApp();
   const { xp, level } = useXP();
+  const { isSupported, subscription, subscribeToPush, unsubscribeFromPush } =
+    usePushNotification();
 
   const [name, setName] = useState(profile.name);
   const [isEditing, setIsEditing] = useState(false);
@@ -30,6 +34,7 @@ export default function ProfileContent({
   const [signingOut, setSigningOut] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [togglingNotif, setTogglingNotif] = useState(false);
 
   const initial = profile.name?.charAt(0)?.toUpperCase() ?? "?";
 
@@ -107,6 +112,22 @@ export default function ProfileContent({
 
     toast.success("Budget cleared! Let's start fresh.");
     router.push("/onboarding");
+  }
+
+  async function handleToggleNotifications(enabled: boolean) {
+    setTogglingNotif(true);
+    try {
+      if (enabled) {
+        await subscribeToPush();
+        toast.success("Notifications enabled");
+      } else {
+        await unsubscribeFromPush();
+        toast.success("Notifications disabled");
+      }
+    } catch {
+      toast.error("Failed to update notification settings");
+    }
+    setTogglingNotif(false);
   }
 
   async function handleSignOut() {
@@ -208,6 +229,22 @@ export default function ProfileContent({
               {profile.name}
             </span>
           </motion.button>
+        )}
+
+        {isSupported && (
+          <div className="rounded-xl bg-card border p-4 flex items-center justify-between">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm">Push notifications</span>
+              <span className="text-xs text-muted-foreground">
+                {subscription ? "Enabled" : "Disabled"}
+              </span>
+            </div>
+            <Switch
+              checked={!!subscription}
+              onCheckedChange={handleToggleNotifications}
+              disabled={togglingNotif}
+            />
+          </div>
         )}
       </FadeIn>
 
