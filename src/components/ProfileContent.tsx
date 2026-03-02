@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { toast } from "sonner";
@@ -36,6 +36,10 @@ export default function ProfileContent({
   const [saving, setSaving] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [togglingNotif, setTogglingNotif] = useState(false);
+  const [budgetToDelete, setBudgetToDelete] = useState<Budget | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTriggered = useRef(false);
 
   const initial = profile.name?.charAt(0)?.toUpperCase() ?? "?";
 
@@ -50,6 +54,64 @@ export default function ProfileContent({
       day: "numeric",
       year: "numeric",
     });
+
+  function handlePointerDown(b: Budget) {
+    longPressTriggered.current = false;
+    longPressTimer.current = setTimeout(() => {
+      longPressTriggered.current = true;
+      setBudgetToDelete(b);
+    }, 500);
+  }
+
+  function handlePointerUp() {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }
+
+  async function handleDeleteBudget() {
+    if (!budgetToDelete) return;
+    setDeleting(true);
+
+    const userId = profile.id;
+
+    await supabase
+      .from("income")
+      .delete()
+      .eq("user_id", userId)
+      .gte("date", budgetToDelete.start_date)
+      .lte("date", budgetToDelete.end_date);
+
+    await supabase
+      .from("expenses")
+      .delete()
+      .eq("user_id", userId)
+      .gte("date", budgetToDelete.start_date)
+      .lte("date", budgetToDelete.end_date);
+
+    const { error } = await supabase
+      .from("budgets")
+      .delete()
+      .eq("id", budgetToDelete.id);
+
+    if (error) {
+      toast.error("Failed to delete budget");
+      setDeleting(false);
+      setBudgetToDelete(null);
+      return;
+    }
+
+    toast.success("Budget deleted");
+    setDeleting(false);
+    setBudgetToDelete(null);
+
+    if (budgetToDelete.id === budget.id) {
+      router.push("/dashboard");
+    } else {
+      window.location.reload();
+    }
+  }
 
   async function handleSaveName() {
     const trimmed = name.trim();
@@ -146,18 +208,64 @@ export default function ProfileContent({
           <h2 className="text-sm font-semibold text-muted-foreground px-1">
             Budget History
           </h2>
+          <p className="text-xs text-muted-foreground px-1 -mt-1">
+            Long press to delete
+          </p>
           <div className="flex flex-col gap-2">
             {allBudgets.map((b) => {
               const isCurrent = b.id === budget.id;
+              const isDeleting = budgetToDelete?.id === b.id;
+
+              if (isDeleting) {
+                return (
+                  <div
+                    key={b.id}
+                    className="rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20 p-4 flex flex-col gap-3"
+                  >
+                    <p className="text-sm text-red-600 dark:text-red-400">
+                      Delete this budget and all its transactions?
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate(b.start_date)} &ndash; {formatDate(b.end_date)}
+                      {isCurrent && " (Current)"}
+                    </p>
+                    <div className="flex gap-2">
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        onClick={handleDeleteBudget}
+                        disabled={deleting}
+                        className="flex-1 h-11 rounded-lg bg-red-500 text-white text-sm font-semibold disabled:opacity-50"
+                      >
+                        {deleting ? "Deleting..." : "Delete"}
+                      </motion.button>
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => setBudgetToDelete(null)}
+                        disabled={deleting}
+                        className="flex-1 h-11 rounded-lg border text-sm font-semibold disabled:opacity-50"
+                      >
+                        Cancel
+                      </motion.button>
+                    </div>
+                  </div>
+                );
+              }
+
               return (
                 <motion.button
                   key={b.id}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => {
+                    if (longPressTriggered.current) return;
                     if (!isCurrent) {
                       router.push(`/dashboard?budgetId=${b.id}`);
                     }
                   }}
+                  onPointerDown={() => handlePointerDown(b)}
+                  onPointerUp={handlePointerUp}
+                  onPointerLeave={handlePointerUp}
+                  onPointerCancel={handlePointerUp}
+                  onContextMenu={(e) => e.preventDefault()}
                   className={`rounded-xl border p-4 flex items-center justify-between text-left ${
                     isCurrent
                       ? "border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/20"
