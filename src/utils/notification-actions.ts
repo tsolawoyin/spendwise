@@ -45,7 +45,7 @@ export async function subscribeUser(sub: PS, userId: string) {
 }
 
 export async function unsubscribeUser(userId: string) {
-  subscription = null;
+  // subscription = null;
   const supabase = await createClient();
 
   const { error } = await supabase
