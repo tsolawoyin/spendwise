@@ -2,7 +2,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as SupaClient } from "@supabase/supabase-js";
-import webpush from "web-push";
+import * as webpush from "web-push";
 
 import { NotificationPayload, CreateNotificationParams } from "@/providers/push-notification-context";
 

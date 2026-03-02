@@ -8,7 +8,7 @@ export default function MainLayout({
 }) {
   return (
     <>
-      <main className="max-w-[430px] mx-auto px-4 pt-4 pb-24">
+      <main className="max-w-107.5 mx-auto px-4 pt-4 pb-24">
         <PageTransition>{children}</PageTransition>
       </main>
       <BottomNav />

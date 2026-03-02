@@ -22,12 +22,12 @@ export default function ExpenseForm({ mode, initialData }: ExpenseFormProps) {
   const router = useRouter();
 
   const [amount, setAmount] = useState(
-    initialData ? String(initialData.amount) : ""
+    initialData ? String(initialData.amount) : "",
   );
   const [category, setCategory] = useState(initialData?.category ?? "");
   const [note, setNote] = useState(initialData?.note ?? "");
   const [date, setDate] = useState(
-    initialData?.date ?? new Date().toISOString().split("T")[0]
+    initialData?.date ?? new Date().toISOString().split("T")[0],
   );
   const [loading, setLoading] = useState(false);
   const [showXP, setShowXP] = useState(false);
@@ -66,6 +66,7 @@ export default function ExpenseForm({ mode, initialData }: ExpenseFormProps) {
       setShowXP(true);
       setTimeout(() => {
         toast.success("Expense added!");
+        setLoading(false); //
         router.back();
       }, 800);
     } else {
@@ -81,6 +82,7 @@ export default function ExpenseForm({ mode, initialData }: ExpenseFormProps) {
       }
 
       toast.success("Expense updated!");
+      setLoading(false);
       router.back();
     }
   };
