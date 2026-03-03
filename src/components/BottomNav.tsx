@@ -7,6 +7,7 @@ import { motion } from "motion/react";
 const tabs = [
   { href: "/dashboard", icon: "🏠", label: "Home" },
   { href: "/history", icon: "📋", label: "History" },
+  { href: "/wallet", icon: "💼", label: "Wallet" },
   { href: "/summary", icon: "📊", label: "Summary" },
   { href: "/profile", icon: "👤", label: "Profile" },
 ];

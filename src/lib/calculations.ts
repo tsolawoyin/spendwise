@@ -1,5 +1,10 @@
-export function calcBalance(totalIncome: number, totalExpenses: number): number {
-  return totalIncome - totalExpenses;
+export function calcBalance(
+  totalIncome: number,
+  totalExpenses: number,
+  loanImpact: number = 0,
+  totalSaved: number = 0,
+): number {
+  return totalIncome - totalExpenses - loanImpact - totalSaved;
 }
 
 export function calcDaysLeft(endDate: string | Date): number {
@@ -60,4 +65,67 @@ export function computeStreak(expenseDates: string[]): number {
   }
 
   return streak;
+}
+
+// --- Loan helpers ---
+
+import type {
+  Loan,
+  LoanRepayment,
+  LoanWithRepayments,
+  SavingsGoal,
+  SavingsTransaction,
+  SavingsGoalWithProgress,
+} from "@/lib/types";
+
+export function enrichLoan(
+  loan: Loan,
+  repayments: LoanRepayment[],
+): LoanWithRepayments {
+  const loanRepayments = repayments.filter((r) => r.loan_id === loan.id);
+  const totalRepaid = loanRepayments.reduce((s, r) => s + Number(r.amount), 0);
+  return {
+    ...loan,
+    amount: Number(loan.amount),
+    repayments: loanRepayments,
+    totalRepaid,
+    remaining: Number(loan.amount) - totalRepaid,
+  };
+}
+
+/** Outstanding lent minus outstanding borrowed */
+export function calcLoanImpact(loans: LoanWithRepayments[]): number {
+  let lent = 0;
+  let borrowed = 0;
+  for (const loan of loans) {
+    if (loan.is_settled) continue;
+    if (loan.type === "lent") lent += loan.remaining;
+    else borrowed += loan.remaining;
+  }
+  return lent - borrowed;
+}
+
+// --- Savings helpers ---
+
+export function enrichSavingsGoal(
+  goal: SavingsGoal,
+  transactions: SavingsTransaction[],
+): SavingsGoalWithProgress {
+  const goalTxns = transactions.filter((t) => t.goal_id === goal.id);
+  const totalSaved = goalTxns.reduce((s, t) => {
+    const amt = Number(t.amount);
+    return t.type === "deposit" ? s + amt : s - amt;
+  }, 0);
+  const target = Number(goal.target_amount);
+  return {
+    ...goal,
+    target_amount: target,
+    transactions: goalTxns,
+    totalSaved: Math.max(0, totalSaved),
+    percent: target > 0 ? Math.min(100, Math.round((totalSaved / target) * 100)) : 0,
+  };
+}
+
+export function calcTotalSaved(goals: SavingsGoalWithProgress[]): number {
+  return goals.reduce((s, g) => s + g.totalSaved, 0);
 }

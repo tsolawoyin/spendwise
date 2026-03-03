@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useBudgetData } from "@/hooks/useBudgetData";
-import { computeStreak } from "@/lib/calculations";
+import { computeStreak, enrichLoan, calcLoanImpact, enrichSavingsGoal, calcTotalSaved } from "@/lib/calculations";
 import { EXPENSE_CATEGORIES } from "@/lib/categoryConfig";
 import SummaryContent from "@/components/SummaryContent";
 import SummarySkeleton from "@/components/skeletons/SummarySkeleton";
@@ -17,11 +17,15 @@ interface CategoryTotal {
 export default function SummaryPage() {
   const searchParams = useSearchParams();
   const budgetId = searchParams.get("budgetId") ?? undefined;
-  const { data, isLoading } = useBudgetData({ budgetId });
+  const { data, isLoading } = useBudgetData({
+    budgetId,
+    includeLoans: true,
+    includeSavings: true,
+  });
 
   if (isLoading || !data) return <SummarySkeleton />;
 
-  const { income, expenses } = data;
+  const { income, expenses, loans, loanRepayments, savingsGoals, savingsTransactions } = data;
 
   const totalIncome = income.reduce(
     (sum, row) => sum + Number(row.amount),
@@ -31,6 +35,16 @@ export default function SummaryPage() {
     (sum, row) => sum + Number(row.amount),
     0
   );
+
+  // Loan & savings data
+  const enrichedLoans = (loans ?? []).map((l) => enrichLoan(l, loanRepayments ?? []));
+  const loanImpact = calcLoanImpact(enrichedLoans);
+  const activeLoans = enrichedLoans.filter((l) => !l.is_settled);
+  const lentOut = activeLoans.filter((l) => l.type === "lent").reduce((s, l) => s + l.remaining, 0);
+  const borrowed = activeLoans.filter((l) => l.type === "borrowed").reduce((s, l) => s + l.remaining, 0);
+
+  const enrichedGoals = (savingsGoals ?? []).map((g) => enrichSavingsGoal(g, savingsTransactions ?? []));
+  const totalSaved = calcTotalSaved(enrichedGoals);
 
   const expenseDates = expenses.map((row) => row.date);
   const streak = computeStreak(expenseDates);
@@ -61,6 +75,11 @@ export default function SummaryPage() {
       streak={streak}
       expenseDates={expenseDates}
       categoryTotals={categoryTotals}
+      lentOut={lentOut}
+      borrowed={borrowed}
+      loanImpact={loanImpact}
+      totalSaved={totalSaved}
+      savingsGoalCount={enrichedGoals.length}
     />
   );
 }

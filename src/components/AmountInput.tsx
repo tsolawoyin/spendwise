@@ -3,16 +3,22 @@
 interface AmountInputProps {
   value: string;
   onChange: (value: string) => void;
-  color?: "emerald" | "red";
+  color?: "emerald" | "red" | "blue" | "teal";
 }
+
+const colorMap = {
+  emerald: "text-emerald-500",
+  red: "text-red-500",
+  blue: "text-blue-500",
+  teal: "text-teal-500",
+};
 
 export default function AmountInput({
   value,
   onChange,
   color = "emerald",
 }: AmountInputProps) {
-  const textColor =
-    color === "emerald" ? "text-emerald-500" : "text-red-500";
+  const textColor = colorMap[color];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/[^0-9.]/g, "");

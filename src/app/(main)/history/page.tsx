@@ -9,11 +9,14 @@ import HistorySkeleton from "@/components/skeletons/HistorySkeleton";
 export default function HistoryPage() {
   const searchParams = useSearchParams();
   const budgetId = searchParams.get("budgetId") ?? undefined;
-  const { data, isLoading } = useBudgetData({ budgetId });
+  const { data, isLoading } = useBudgetData({
+    budgetId,
+    includeLoans: true,
+  });
 
   if (isLoading || !data) return <HistorySkeleton />;
 
-  const { income, expenses } = data;
+  const { income, expenses, loans, loanRepayments } = data;
 
   const transactions: Transaction[] = [
     ...income.map((row) => ({
@@ -31,6 +34,24 @@ export default function HistoryPage() {
       amount: Number(row.amount),
       category: row.category,
       note: row.note,
+      date: row.date,
+      created_at: row.created_at,
+    })),
+    ...(loans ?? []).map((row) => ({
+      id: row.id,
+      type: "loan" as const,
+      amount: Number(row.amount),
+      category: row.type === "lent" ? "Lent" : "Borrowed",
+      note: row.person_name,
+      date: row.date,
+      created_at: row.created_at,
+    })),
+    ...(loanRepayments ?? []).map((row) => ({
+      id: row.id,
+      type: "loan_repayment" as const,
+      amount: Number(row.amount),
+      category: "Repayment",
+      note: null,
       date: row.date,
       created_at: row.created_at,
     })),

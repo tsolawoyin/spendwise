@@ -54,9 +54,11 @@ function groupByDate(transactions: Transaction[]) {
 }
 
 function editPath(tx: Transaction): string {
-  return tx.type === "income"
-    ? `/income/${tx.id}/edit`
-    : `/expenses/${tx.id}/edit`;
+  if (tx.type === "income") return `/income/${tx.id}/edit`;
+  if (tx.type === "expense") return `/expenses/${tx.id}/edit`;
+  if (tx.type === "loan") return `/wallet/loans/${tx.id}`;
+  // loan_repayment, savings_deposit, savings_withdraw don't have detail pages
+  return "#";
 }
 
 function TransactionList({ transactions }: { transactions: Transaction[] }) {
@@ -108,6 +110,10 @@ export default function HistoryContent({
     () => transactions.filter((tx) => tx.type === "expense"),
     [transactions]
   );
+  const loanOnly = useMemo(
+    () => transactions.filter((tx) => tx.type === "loan" || tx.type === "loan_repayment"),
+    [transactions]
+  );
 
   return (
     <div className="space-y-4">
@@ -127,6 +133,9 @@ export default function HistoryContent({
             <TabsTrigger value="expenses" className="flex-1">
               Expenses
             </TabsTrigger>
+            <TabsTrigger value="loans" className="flex-1">
+              Loans
+            </TabsTrigger>
           </TabsList>
         </FadeIn>
 
@@ -138,6 +147,9 @@ export default function HistoryContent({
         </TabsContent>
         <TabsContent value="expenses" className="mt-4">
           <TransactionList transactions={expenseOnly} />
+        </TabsContent>
+        <TabsContent value="loans" className="mt-4">
+          <TransactionList transactions={loanOnly} />
         </TabsContent>
       </Tabs>
     </div>

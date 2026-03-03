@@ -3,19 +3,25 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/providers/app-provider";
-import type { Budget, Income, Expense } from "@/lib/types";
+import type { Budget, Income, Expense, Loan, LoanRepayment, SavingsGoal, SavingsTransaction } from "@/lib/types";
 
 interface BudgetData {
   budget: Budget;
   income: Income[];
   expenses: Expense[];
   allBudgets?: Budget[];
+  loans?: Loan[];
+  loanRepayments?: LoanRepayment[];
+  savingsGoals?: SavingsGoal[];
+  savingsTransactions?: SavingsTransaction[];
 }
 
 interface UseBudgetDataOptions {
   budgetOnly?: boolean;
   budgetId?: string;
   includeAllBudgets?: boolean;
+  includeLoans?: boolean;
+  includeSavings?: boolean;
 }
 
 export function useBudgetData(options?: UseBudgetDataOptions) {
@@ -102,11 +108,69 @@ export function useBudgetData(options?: UseBudgetDataOptions) {
 
       if (cancelled) return;
 
+      // Optionally fetch loans and savings (not budget-scoped)
+      let loans: Loan[] | undefined;
+      let loanRepayments: LoanRepayment[] | undefined;
+      let savingsGoals: SavingsGoal[] | undefined;
+      let savingsTransactions: SavingsTransaction[] | undefined;
+
+      const extraFetches: Promise<void>[] = [];
+
+      if (options?.includeLoans) {
+        extraFetches.push(
+          Promise.all([
+            supabase
+              .from("loans")
+              .select("*")
+              .eq("user_id", user!.id)
+              .order("date", { ascending: false }),
+            supabase
+              .from("loan_repayments")
+              .select("*")
+              .eq("user_id", user!.id)
+              .order("date", { ascending: false }),
+          ]).then(([loansRes, repRes]) => {
+            loans = loansRes.data ?? [];
+            loanRepayments = repRes.data ?? [];
+          }),
+        );
+      }
+
+      if (options?.includeSavings) {
+        extraFetches.push(
+          Promise.all([
+            supabase
+              .from("savings_goals")
+              .select("*")
+              .eq("user_id", user!.id)
+              .order("created_at", { ascending: false }),
+            supabase
+              .from("savings_transactions")
+              .select("*")
+              .eq("user_id", user!.id)
+              .order("date", { ascending: false }),
+          ]).then(([goalsRes, txnsRes]) => {
+            savingsGoals = goalsRes.data ?? [];
+            savingsTransactions = txnsRes.data ?? [];
+          }),
+        );
+      }
+
+      if (extraFetches.length > 0) {
+        await Promise.all(extraFetches);
+      }
+
+      if (cancelled) return;
+
       setData({
         budget,
         income: incomeResult.data ?? [],
         expenses: expenseResult.data ?? [],
         allBudgets,
+        loans,
+        loanRepayments,
+        savingsGoals,
+        savingsTransactions,
       });
       setIsLoading(false);
     }
@@ -116,7 +180,7 @@ export function useBudgetData(options?: UseBudgetDataOptions) {
     return () => {
       cancelled = true;
     };
-  }, [user, supabase, router, options?.budgetOnly, options?.budgetId, options?.includeAllBudgets]);
+  }, [user, supabase, router, options?.budgetOnly, options?.budgetId, options?.includeAllBudgets, options?.includeLoans, options?.includeSavings]);
 
   return { data, isLoading };
 }

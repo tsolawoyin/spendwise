@@ -6,12 +6,14 @@ interface StatCardProps {
   emoji: string;
   label: string;
   amount: number;
-  color: "emerald" | "red";
+  color: "emerald" | "red" | "blue" | "teal";
 }
 
 const colorClasses = {
   emerald: "text-emerald-600 dark:text-emerald-400",
   red: "text-red-600 dark:text-red-400",
+  blue: "text-blue-600 dark:text-blue-400",
+  teal: "text-teal-600 dark:text-teal-400",
 };
 
 export default function StatCard({ emoji, label, amount, color }: StatCardProps) {

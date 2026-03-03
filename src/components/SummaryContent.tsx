@@ -21,6 +21,11 @@ interface SummaryContentProps {
   streak: number;
   expenseDates: string[];
   categoryTotals: CategoryTotal[];
+  lentOut?: number;
+  borrowed?: number;
+  loanImpact?: number;
+  totalSaved?: number;
+  savingsGoalCount?: number;
 }
 
 export default function SummaryContent({
@@ -29,6 +34,11 @@ export default function SummaryContent({
   streak,
   expenseDates,
   categoryTotals,
+  lentOut = 0,
+  borrowed = 0,
+  loanImpact = 0,
+  totalSaved = 0,
+  savingsGoalCount = 0,
 }: SummaryContentProps) {
   const { xp, level, xpToNextLevel } = useXP();
   const xpPercent = ((xp % 100) / 100) * 100;
@@ -93,8 +103,43 @@ export default function SummaryContent({
         </div>
       </FadeIn>
 
+      {/* Loans & Savings Overview */}
+      {(lentOut > 0 || borrowed > 0 || totalSaved > 0) && (
+        <FadeIn delay={0.2}>
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold">Wallet Overview</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {lentOut > 0 && (
+                <StatCard
+                  emoji="🤝"
+                  label="Owed to You"
+                  amount={lentOut}
+                  color="blue"
+                />
+              )}
+              {borrowed > 0 && (
+                <StatCard
+                  emoji="🏦"
+                  label="You Owe"
+                  amount={borrowed}
+                  color="blue"
+                />
+              )}
+              {totalSaved > 0 && (
+                <StatCard
+                  emoji="🎯"
+                  label={`Saved (${savingsGoalCount} goal${savingsGoalCount !== 1 ? "s" : ""})`}
+                  amount={totalSaved}
+                  color="teal"
+                />
+              )}
+            </div>
+          </div>
+        </FadeIn>
+      )}
+
       {/* Totals */}
-      <FadeIn delay={0.2}>
+      <FadeIn delay={0.25}>
         <div className="grid grid-cols-2 gap-3">
           <StatCard
             emoji="💰"

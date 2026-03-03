@@ -27,6 +27,8 @@ interface DashboardContentProps {
   recentTransactions: Transaction[];
   streak: number;
   isHistorical?: boolean;
+  loanImpact?: number;
+  totalSaved?: number;
 }
 
 export default function DashboardContent({
@@ -36,11 +38,13 @@ export default function DashboardContent({
   recentTransactions,
   streak,
   isHistorical,
+  loanImpact = 0,
+  totalSaved = 0,
 }: DashboardContentProps) {
   const { user } = useApp();
   const { xp, level } = useXP();
 
-  const balance = calcBalance(totalIncome, totalExpenses);
+  const balance = calcBalance(totalIncome, totalExpenses, loanImpact, totalSaved);
   const daysLeft = calcDaysLeft(budget.end_date);
   const dailyAllowance = calcDailyAllowance(balance, daysLeft);
 
@@ -129,6 +133,8 @@ export default function DashboardContent({
         budgetPercent={budgetPercent}
         daysLeft={daysLeft}
         dailyAllowance={dailyAllowance}
+        loanImpact={loanImpact}
+        totalSaved={totalSaved}
       />
 
       {/* Stats Grid */}
