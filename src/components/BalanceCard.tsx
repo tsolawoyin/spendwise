@@ -34,13 +34,18 @@ export default function BalanceCard({
       <CountUp to={balance} className="text-3xl font-bold block mb-3" />
       {hasExtras && (
         <div className="flex flex-wrap gap-x-4 gap-y-1 mb-3 text-xs text-slate-400">
-          {loanImpact !== 0 && (
+          {loanImpact > 0 && (
             <span>
-              🤝 Loans: {loanImpact > 0 ? "-" : "+"}₦{Math.abs(loanImpact).toLocaleString()}
+              🤝 Lent out: -₦{loanImpact.toLocaleString()}
+            </span>
+          )}
+          {loanImpact < 0 && (
+            <span>
+              🏦 Borrowed: +₦{Math.abs(loanImpact).toLocaleString()}
             </span>
           )}
           {totalSaved > 0 && (
-            <span>🎯 Saved: ₦{totalSaved.toLocaleString()}</span>
+            <span>🎯 Set aside: -₦{totalSaved.toLocaleString()}</span>
           )}
         </div>
       )}

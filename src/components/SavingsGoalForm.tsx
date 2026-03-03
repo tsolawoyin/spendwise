@@ -62,7 +62,7 @@ export default function SavingsGoalForm({ mode, initialData }: SavingsGoalFormPr
       setTimeout(() => {
         toast.success("Savings goal created!");
         setLoading(false);
-        router.back();
+        router.replace("/wallet/savings");
       }, 800);
     } else {
       const { error } = await supabase
@@ -82,7 +82,7 @@ export default function SavingsGoalForm({ mode, initialData }: SavingsGoalFormPr
 
       toast.success("Goal updated!");
       setLoading(false);
-      router.back();
+      router.replace(`/wallet/savings/${initialData!.id}`);
     }
   };
 

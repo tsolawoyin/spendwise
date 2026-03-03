@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useBudgetData } from "@/hooks/useBudgetData";
-import { computeStreak, enrichLoan, calcLoanImpact, enrichSavingsGoal, calcTotalSaved } from "@/lib/calculations";
+import { computeStreak } from "@/lib/calculations";
 import { EXPENSE_CATEGORIES } from "@/lib/categoryConfig";
 import SummaryContent from "@/components/SummaryContent";
 import SummarySkeleton from "@/components/skeletons/SummarySkeleton";
@@ -25,7 +25,7 @@ export default function SummaryPage() {
 
   if (isLoading || !data) return <SummarySkeleton />;
 
-  const { income, expenses, loans, loanRepayments, savingsGoals, savingsTransactions } = data;
+  const { income, expenses, enrichedLoans, loanImpact, enrichedGoals, totalSaved } = data;
 
   const totalIncome = income.reduce(
     (sum, row) => sum + Number(row.amount),
@@ -36,15 +36,10 @@ export default function SummaryPage() {
     0
   );
 
-  // Loan & savings data
-  const enrichedLoans = (loans ?? []).map((l) => enrichLoan(l, loanRepayments ?? []));
-  const loanImpact = calcLoanImpact(enrichedLoans);
-  const activeLoans = enrichedLoans.filter((l) => !l.is_settled);
+  // Loan & savings data (pre-enriched by useBudgetData)
+  const activeLoans = (enrichedLoans ?? []).filter((l) => !l.is_settled);
   const lentOut = activeLoans.filter((l) => l.type === "lent").reduce((s, l) => s + l.remaining, 0);
   const borrowed = activeLoans.filter((l) => l.type === "borrowed").reduce((s, l) => s + l.remaining, 0);
-
-  const enrichedGoals = (savingsGoals ?? []).map((g) => enrichSavingsGoal(g, savingsTransactions ?? []));
-  const totalSaved = calcTotalSaved(enrichedGoals);
 
   const expenseDates = expenses.map((row) => row.date);
   const streak = computeStreak(expenseDates);
@@ -77,9 +72,9 @@ export default function SummaryPage() {
       categoryTotals={categoryTotals}
       lentOut={lentOut}
       borrowed={borrowed}
-      loanImpact={loanImpact}
-      totalSaved={totalSaved}
-      savingsGoalCount={enrichedGoals.length}
+      loanImpact={loanImpact ?? 0}
+      totalSaved={totalSaved ?? 0}
+      savingsGoalCount={(enrichedGoals ?? []).length}
     />
   );
 }

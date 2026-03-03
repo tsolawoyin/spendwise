@@ -22,6 +22,9 @@ export default function LoanDetailContent({ loan }: LoanDetailContentProps) {
     : 0;
 
   const toggleSettle = async () => {
+    const action = loan.is_settled ? "reopen this loan" : "mark this loan as settled";
+    if (!window.confirm(`Are you sure you want to ${action}?`)) return;
+
     const { error } = await supabase
       .from("loans")
       .update({ is_settled: !loan.is_settled })
@@ -33,8 +36,31 @@ export default function LoanDetailContent({ loan }: LoanDetailContentProps) {
     }
 
     toast.success(loan.is_settled ? "Loan reopened" : "Loan marked as settled");
-    router.refresh();
-    // Force re-fetch by navigating
+    router.replace(`/wallet/loans/${loan.id}`);
+  };
+
+  const deleteRepayment = async (repaymentId: string) => {
+    if (!window.confirm("Delete this repayment?")) return;
+
+    const { error } = await supabase
+      .from("loan_repayments")
+      .delete()
+      .eq("id", repaymentId);
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
+    // Un-settle the loan if it was auto-settled
+    if (loan.is_settled) {
+      await supabase
+        .from("loans")
+        .update({ is_settled: false })
+        .eq("id", loan.id);
+    }
+
+    toast.success("Repayment deleted");
     router.replace(`/wallet/loans/${loan.id}`);
   };
 
@@ -151,9 +177,17 @@ export default function LoanDetailContent({ loan }: LoanDetailContentProps) {
                       })}
                     </p>
                   </div>
-                  <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">
-                    ₦{Number(r.amount).toLocaleString()}
-                  </p>
+                  <div className="flex items-center gap-3">
+                    <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                      ₦{Number(r.amount).toLocaleString()}
+                    </p>
+                    <button
+                      onClick={() => deleteRepayment(r.id)}
+                      className="text-xs text-red-500 hover:text-red-600 font-medium"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </StaggerItem>
             ))}

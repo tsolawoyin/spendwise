@@ -73,7 +73,7 @@ export default function LoanForm({ mode, initialData }: LoanFormProps) {
       setTimeout(() => {
         toast.success("Loan added!");
         setLoading(false);
-        router.back();
+        router.replace("/wallet/loans");
       }, 800);
     } else {
       const { error } = await supabase
@@ -95,7 +95,7 @@ export default function LoanForm({ mode, initialData }: LoanFormProps) {
 
       toast.success("Loan updated!");
       setLoading(false);
-      router.back();
+      router.replace(`/wallet/loans/${initialData!.id}`);
     }
   };
 

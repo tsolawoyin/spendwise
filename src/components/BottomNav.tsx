@@ -24,7 +24,7 @@ export default function BottomNav() {
           const isActive =
             pathname === tab.href || pathname.startsWith(`${tab.href}/`);
           const href =
-            budgetId && tab.href !== "/profile"
+            budgetId && tab.href !== "/profile" && tab.href !== "/wallet"
               ? `${tab.href}?budgetId=${budgetId}`
               : tab.href;
 

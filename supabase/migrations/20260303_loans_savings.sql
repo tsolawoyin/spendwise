@@ -73,3 +73,11 @@ create policy "Users can manage own savings transactions"
   on savings_transactions for all
   using (user_id = auth.uid())
   with check (user_id = auth.uid());
+
+-- 5. Indexes on foreign key columns
+create index idx_loans_user_id on loans(user_id);
+create index idx_loan_repayments_user_id on loan_repayments(user_id);
+create index idx_loan_repayments_loan_id on loan_repayments(loan_id);
+create index idx_savings_goals_user_id on savings_goals(user_id);
+create index idx_savings_transactions_user_id on savings_transactions(user_id);
+create index idx_savings_transactions_goal_id on savings_transactions(goal_id);

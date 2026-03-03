@@ -53,12 +53,11 @@ function groupByDate(transactions: Transaction[]) {
   return groups;
 }
 
-function editPath(tx: Transaction): string {
+function editPath(tx: Transaction): string | null {
   if (tx.type === "income") return `/income/${tx.id}/edit`;
   if (tx.type === "expense") return `/expenses/${tx.id}/edit`;
   if (tx.type === "loan") return `/wallet/loans/${tx.id}`;
-  // loan_repayment, savings_deposit, savings_withdraw don't have detail pages
-  return "#";
+  return null;
 }
 
 function TransactionList({ transactions }: { transactions: Transaction[] }) {
@@ -83,15 +82,22 @@ function TransactionList({ transactions }: { transactions: Transaction[] }) {
             {group.label}
           </p>
           <StaggerList className="divide-y divide-border bg-white dark:bg-slate-800 rounded-xl overflow-hidden">
-            {group.items.map((tx) => (
-              <StaggerItem key={tx.id}>
-                <Link href={editPath(tx)}>
-                  <motion.div whileTap={{ scale: 0.98 }}>
+            {group.items.map((tx) => {
+              const href = editPath(tx);
+              return (
+                <StaggerItem key={tx.id}>
+                  {href ? (
+                    <Link href={href}>
+                      <motion.div whileTap={{ scale: 0.98 }}>
+                        <TransactionItem transaction={tx} />
+                      </motion.div>
+                    </Link>
+                  ) : (
                     <TransactionItem transaction={tx} />
-                  </motion.div>
-                </Link>
-              </StaggerItem>
-            ))}
+                  )}
+                </StaggerItem>
+              );
+            })}
           </StaggerList>
         </div>
       ))}

@@ -66,12 +66,12 @@ export default function SavingsTransactionForm({
       setTimeout(() => {
         toast.success("Deposit saved!");
         setLoading(false);
-        router.back();
+        router.replace(`/wallet/savings/${goal.id}`);
       }, 800);
     } else {
       toast.success("Withdrawal recorded!");
       setLoading(false);
-      router.back();
+      router.replace(`/wallet/savings/${goal.id}`);
     }
   };
 

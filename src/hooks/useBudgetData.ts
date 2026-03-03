@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/providers/app-provider";
-import type { Budget, Income, Expense, Loan, LoanRepayment, SavingsGoal, SavingsTransaction } from "@/lib/types";
+import type { Budget, Income, Expense, Loan, LoanRepayment, LoanWithRepayments, SavingsGoal, SavingsTransaction, SavingsGoalWithProgress } from "@/lib/types";
+import { enrichLoan, calcLoanImpact, enrichSavingsGoal, calcTotalSaved } from "@/lib/calculations";
 
 interface BudgetData {
   budget: Budget;
@@ -14,6 +15,10 @@ interface BudgetData {
   loanRepayments?: LoanRepayment[];
   savingsGoals?: SavingsGoal[];
   savingsTransactions?: SavingsTransaction[];
+  enrichedLoans?: LoanWithRepayments[];
+  loanImpact?: number;
+  enrichedGoals?: SavingsGoalWithProgress[];
+  totalSaved?: number;
 }
 
 interface UseBudgetDataOptions {
@@ -162,6 +167,23 @@ export function useBudgetData(options?: UseBudgetDataOptions) {
 
       if (cancelled) return;
 
+      // Pre-enrich loan/savings data so pages don't duplicate this
+      let enrichedLoans: LoanWithRepayments[] | undefined;
+      let loanImpactVal: number | undefined;
+      if (loans && loanRepayments) {
+        const reps = loanRepayments;
+        enrichedLoans = loans.map((l) => enrichLoan(l, reps));
+        loanImpactVal = calcLoanImpact(enrichedLoans);
+      }
+
+      let enrichedGoals: SavingsGoalWithProgress[] | undefined;
+      let totalSavedVal: number | undefined;
+      if (savingsGoals && savingsTransactions) {
+        const txns = savingsTransactions;
+        enrichedGoals = savingsGoals.map((g) => enrichSavingsGoal(g, txns));
+        totalSavedVal = calcTotalSaved(enrichedGoals);
+      }
+
       setData({
         budget,
         income: incomeResult.data ?? [],
@@ -171,6 +193,10 @@ export function useBudgetData(options?: UseBudgetDataOptions) {
         loanRepayments,
         savingsGoals,
         savingsTransactions,
+        enrichedLoans,
+        loanImpact: loanImpactVal,
+        enrichedGoals,
+        totalSaved: totalSavedVal,
       });
       setIsLoading(false);
     }

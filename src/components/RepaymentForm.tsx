@@ -65,7 +65,7 @@ export default function RepaymentForm({ loan }: RepaymentFormProps) {
     setTimeout(() => {
       toast.success("Repayment recorded!");
       setLoading(false);
-      router.back();
+      router.replace(`/wallet/loans/${loan.id}`);
     }, 800);
   };
 

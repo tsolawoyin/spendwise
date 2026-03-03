@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useBudgetData } from "@/hooks/useBudgetData";
-import { computeStreak, enrichLoan, calcLoanImpact, enrichSavingsGoal, calcTotalSaved } from "@/lib/calculations";
+import { computeStreak } from "@/lib/calculations";
 import type { Transaction } from "@/lib/types";
 import DashboardContent from "@/components/DashboardContent";
 import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
@@ -18,7 +18,7 @@ export default function DashboardPage() {
 
   if (isLoading || !data) return <DashboardSkeleton />;
 
-  const { budget, income, expenses, loans, loanRepayments, savingsGoals, savingsTransactions } = data;
+  const { budget, income, expenses, loanImpact, totalSaved } = data;
 
   const totalIncome = income.reduce(
     (sum, row) => sum + Number(row.amount),
@@ -28,14 +28,6 @@ export default function DashboardPage() {
     (sum, row) => sum + Number(row.amount),
     0
   );
-
-  // Compute loan impact
-  const enrichedLoans = (loans ?? []).map((l) => enrichLoan(l, loanRepayments ?? []));
-  const loanImpact = calcLoanImpact(enrichedLoans);
-
-  // Compute savings total
-  const enrichedGoals = (savingsGoals ?? []).map((g) => enrichSavingsGoal(g, savingsTransactions ?? []));
-  const totalSaved = calcTotalSaved(enrichedGoals);
 
   // Build merged transaction list, sorted by date descending, take last 5
   const transactions: Transaction[] = [
@@ -76,8 +68,8 @@ export default function DashboardPage() {
       recentTransactions={transactions}
       streak={streak}
       isHistorical={!!budgetId}
-      loanImpact={loanImpact}
-      totalSaved={totalSaved}
+      loanImpact={loanImpact ?? 0}
+      totalSaved={totalSaved ?? 0}
     />
   );
 }
